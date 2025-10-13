@@ -1,0 +1,99 @@
+PROBLEM STATEMENT:
+How can we use temperature, humidity, and wind speed data to predict weather conditions accurately, and what are the most influential meteorological features in this prediction?
+ TITLE:
+Weather Condition Prediction Using Machine Learning Techniques
+CODE:
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+
+# Data Generation
+np.random.seed(42)
+n = 10000
+date = pd.date_range(start='2025-01-01', periods=n, freq='D')
+temperature = np.round(np.random.normal(loc=25, scale=5, size=n), 1)  # Mean 25°C, std 5
+humidity = np.round(np.random.uniform(30, 90, size=n), 1)
+wind_speed = np.round(np.random.uniform(0, 30, size=n), 1)
+weather = np.random.choice(['Sunny', 'Cloudy', 'Rainy', 'Stormy', 'Foggy'], size=n, p=[0.4, 0.3, 0.2, 0.05, 0.05])
+
+# DataFrame
+df_weather = pd.DataFrame({
+    'date': date,
+    'temperature': temperature,
+    'humidity': humidity,
+    'wind_speed': wind_speed,
+    'weather': weather
+})
+
+# First data overview
+print("First 5 rows of weather data:")
+print(df_weather.head())
+
+# Missing Values
+print("\nMissing Values:")
+print(df_weather.isnull().sum())
+
+# Summary Statistics
+print("\nSummary Statistics:")
+print(df_weather.describe())
+
+# Weather Distribution
+print("\nWeather Condition Distribution:")
+print(df_weather['weather'].value_counts())
+sns.countplot(x='weather', data=df_weather, palette='pastel')
+plt.title('Weather Condition Distribution')
+plt.show()
+
+# Histograms
+sns.histplot(df_weather['temperature'], kde=True, color='orange')
+plt.title('Temperature Distribution')
+plt.show()
+
+sns.histplot(df_weather['humidity'], kde=True, color='blue')
+plt.title('Humidity Distribution')
+plt.show()
+
+sns.histplot(df_weather['wind_speed'], kde=True, color='green')
+plt.title('Wind Speed Distribution')
+plt.show()
+
+# Boxplots
+sns.boxplot(x='weather', y='temperature', data=df_weather, palette='pastel')
+plt.title('Temperature by Weather Condition')
+plt.show()
+
+# Encode Weather for ML
+le_weather = LabelEncoder()
+df_weather['weather_encoded'] = le_weather.fit_transform(df_weather['weather'])
+
+# Features and Target
+X = df_weather[['temperature', 'humidity', 'wind_speed']]
+y = df_weather['weather_encoded']
+
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Random Forest Classifier
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+rf_pred = rf_model.predict(X_test)
+
+# Results
+print("\n🔷 Random Forest Weather Prediction Results:")
+print("Accuracy:", accuracy_score(y_test, rf_pred))
+print("Classification Report:\n", classification_report(y_test, rf_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, rf_pred))
+
+# Feature Importances
+importances = rf_model.feature_importances_
+feature_names = X.columns
+sns.barplot(x=importances, y=feature_names, palette='pastel')
+plt.title('Feature Importances (Weather Prediction)')
+plt.show()
+
+
