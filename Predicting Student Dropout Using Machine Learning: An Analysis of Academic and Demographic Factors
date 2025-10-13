@@ -1,0 +1,177 @@
+Project Research Question
+How effectively can machine learning models predict student dropout based on demographic attributes, academic performance, and study habits, and what are the key factors influencing dropout rates?
+Project Name (Title)
+Predicting Student Dropout Using Machine Learning: An Analysis of Academic and Demographic Factors
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+
+# Data Generation
+np.random.seed(42)
+n = 20000
+student_id = np.arange(1, n+1)
+gender = np.random.choice(['Male', 'Female'], size=n)
+age = np.random.randint(18, 25, size=n)
+attendance = np.random.randint(50, 100, size=n)
+study_hours = np.random.randint(1, 8, size=n)
+course = np.random.choice(['BSc', 'BBA', 'BCom', 'BTech','DTSC','AIR','LAW','MBBS','CA'], size=n)
+gpa = np.round(np.random.uniform(4.0, 10.0, size=n), 2)
+dropout = np.random.choice(['yes', 'no'], size=n, p=[0.15, 0.85])
+
+# DataFrame
+df = pd.DataFrame({
+    'student_id': student_id,
+    'gender': gender,
+    'age': age,
+    'attendance': attendance,
+    'study_hours': study_hours,
+    'course': course,
+    'gpa': gpa,
+    'dropout': dropout
+})
+
+# First Data Overview
+print("First data overview:")
+print(df.head())
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# Boxplots for GPA and Attendance
+sns.boxplot(x=df['gpa'], color='lightblue')
+plt.title('Boxplot of GPA')
+plt.show()
+
+sns.boxplot(x=df['attendance'], color='lightgreen')
+plt.title('Boxplot of Attendance')
+plt.show()
+
+# Gender Distribution
+print("\nGender distribution:")
+print(df['gender'].value_counts())
+sns.countplot(x='gender', data=df, palette='pastel')
+plt.title('Gender distribution')
+plt.show()
+
+# Course Distribution
+print("\nCourse distribution:")
+print(df['course'].value_counts())
+sns.countplot(x='course', data=df, palette='pastel')
+plt.title('Course distribution')
+plt.show()
+
+# Summary Statistics
+print("\nAge Summary:")
+print(df['age'].describe())
+print("\nGPA Summary:")
+print(df['gpa'].describe())
+print("\nAttendance Summary:")
+print(df['attendance'].describe())
+
+# Histograms
+sns.histplot(df['gpa'], kde=True, color='orange')
+plt.title('GPA Distribution')
+plt.show()
+
+sns.histplot(df['attendance'], kde=True, color='red')
+plt.title('Attendance Distribution')
+plt.show()
+
+# Bivariate Analysis: Gender vs Dropout
+sns.countplot(x='gender', hue='dropout', data=df)
+plt.title('Gender vs Dropout')
+plt.show()
+
+# Study Hours vs GPA
+sns.scatterplot(x='study_hours', y='gpa', data=df)
+plt.title('Study Hours vs GPA')
+plt.show()
+
+# Dropout vs GPA
+sns.boxplot(y='gpa', x='dropout', data=df, palette='pastel')
+plt.title('GPA vs Dropout')
+plt.show()
+
+# Multivariate Analysis: Pairplot
+sns.pairplot(df[['age', 'attendance', 'study_hours', 'gpa', 'gender']], hue='gender', palette='pastel')
+plt.suptitle('Pairplot by Gender', y=1.02)
+plt.show()
+
+# Correlation Heatmap
+correlation = df[['age', 'attendance', 'study_hours', 'gpa']].corr()
+sns.heatmap(correlation, annot=True)
+plt.title('Correlation Heatmap')
+plt.show()
+
+# Encode Categorical Variables
+le_gender = LabelEncoder()
+df['gender_encoded'] = le_gender.fit_transform(df['gender'])
+
+le_course = LabelEncoder()
+df['course_encoded'] = le_course.fit_transform(df['course'])
+
+le_dropout = LabelEncoder()
+df['dropout_encoded'] = le_dropout.fit_transform(df['dropout'])
+
+# Features and Target
+X = df[['age', 'attendance', 'study_hours', 'gpa', 'gender_encoded', 'course_encoded']]
+y = df['dropout_encoded']
+
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Logistic Regression
+lr_model = LogisticRegression(max_iter=200)
+lr_model.fit(X_train, y_train)
+lr_pred = lr_model.predict(X_test)
+
+print("\n🔷 Logistic Regression Results:")
+print("Accuracy:", accuracy_score(y_test, lr_pred))
+print("Classification Report:\n", classification_report(y_test, lr_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, lr_pred))
+
+# Decision Tree
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+dt_pred = dt_model.predict(X_test)
+
+print("\n🔷 Decision Tree Results:")
+print("Accuracy:", accuracy_score(y_test, dt_pred))
+print("Classification Report:\n", classification_report(y_test, dt_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, dt_pred))
+
+# Random Forest
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+rf_pred = rf_model.predict(X_test)
+
+print("\n🔷 Random Forest Results:")
+print("Accuracy:", accuracy_score(y_test, rf_pred))
+print("Classification Report:\n", classification_report(y_test, rf_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, rf_pred))
+
+# Model Comparison
+models = ['Logistic Regression', 'Decision Tree', 'Random Forest']
+accuracies = [accuracy_score(y_test, lr_pred),
+              accuracy_score(y_test, dt_pred),
+              accuracy_score(y_test, rf_pred)]
+
+comparison_df = pd.DataFrame({'Model': models, 'Accuracy': accuracies})
+print(comparison_df)
+
+# Feature Importances (Random Forest)
+importances = rf_model.feature_importances_
+feature_names = X.columns
+sns.barplot(x=importances, y=feature_names, palette='pastel')
+plt.title('Feature Importances (Random Forest)')
+plt.show()
+
+
