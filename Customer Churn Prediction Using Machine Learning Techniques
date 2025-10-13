@@ -1,0 +1,159 @@
+How effectively can machine learning models predict customer churn based on demographic and service plan data, and what are the key features influencing churn in telecom customers?
+PROJECT NAME: Customer Churn Prediction Using Machine Learning Techniques: A Data-Driven Approach
+CODE:
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from seaborn import pairplot
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import plot_tree
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+
+np.random.seed(0)
+n=200
+customer_id=np.arange(1,n+1)
+gender=np.random.choice(['Male','Female','Others'],size=n)
+age=np.random.randint(18,80,size=n)
+tenure=np.random.randint(1,20,size=n)
+service_plan=np.random.choice([1,2,3,4],size=n)
+churn=np.random.choice(['yes','no'],size=n,p=[0.2,0.8])
+
+df=pd.DataFrame({
+    'customer_id':customer_id,
+    'gender':gender,
+    'age':age,
+    'tenure':tenure,
+    'service_plan':service_plan,
+    'churn':churn
+})
+
+print("First data overview:")
+print(df.head())
+
+print("\n Missing Values:")
+print(df.isnull().sum())
+
+# check for outliers in age and tenure
+sns.boxplot(x=df['age'],color='olive')
+plt.title('Boxplot of Age')
+plt.show()
+sns.boxplot(x=df['tenure'],color='pink')
+plt.title('Boxplot of tenure')
+plt.show()
+#Gender distribution
+print("\nGender distribution ")
+print(df['gender'].value_counts())
+sns.countplot(x='gender',data=df,palette='pastel')
+plt.title('Gender distribution')
+plt.show()
+#Service Plan Distribution
+print("\nService Plan Distribution")
+print(df['service_plan'].value_counts)
+sns.countplot(x='service_plan',data=df,palette='pastel')
+plt.title('Service Plan Distribution')
+plt.show()
+# Summary Statistics for Age and Tenure
+print("\n Age Summary")
+print(df['age'].describe())
+print("\nTenure Summary")
+print(df['tenure'].describe())
+#Histogram for Age and Tenure
+sns.histplot(df['age'],kde=True,color='orange')
+plt.title('Age Distribution')
+plt.show()
+sns.histplot(df['tenure'],kde=True,color='red')
+plt.title('Tenure Distribution')
+plt.show()
+#Bivarite Analysis
+#Gender vs Churn
+sns.countplot(x='gender',hue='churn',data=df)
+plt.title('Gender vs churn')
+plt.show()
+#Age vs Tenure
+sns.scatterplot(x='age',y='tenure',data=df)
+plt.title('Age vs Tenure')
+plt.show()
+#Chure vs Age
+sns.boxplot(y='age',x='churn',data=df,palette='pastel')
+plt.title('Age vs Tenure')
+plt.show()
+#Multivariate Analysis
+#Scatter Plot Matrix (Age,Tenure,Service Plan)
+sns.pairplot(df[['age', 'tenure', 'service_plan', 'gender']], hue='gender', palette='pastel')
+plt.suptitle('Pairplot of Age, Tenure, Service Plan by Gender', y=1.02)
+plt.show()
+#Correlation Heatmap(Age and Tenure)
+correlation=df[['age','tenure']].corr()
+sns.heatmap(correlation,annot=True)
+plt.title('Correlation Heatmap of Age and Tenure')
+plt.show()
+
+# Encode categorical variables
+le_gender = LabelEncoder()
+df['gender_encoded'] = le_gender.fit_transform(df['gender'])
+
+le_churn = LabelEncoder()
+df['churn_encoded'] = le_churn.fit_transform(df['churn'])
+
+# Features and target
+X = df[['age', 'tenure', 'service_plan', 'gender_encoded']]
+y = df['churn_encoded']
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# ---------------------------
+# Logistic Regression Model
+# ---------------------------
+lr_model = LogisticRegression()
+lr_model.fit(X_train, y_train)
+lr_pred = lr_model.predict(X_test)
+
+print("\n🔷 Logistic Regression Results:")
+print("Accuracy:", accuracy_score(y_test, lr_pred))
+print("Classification Report:\n", classification_report(y_test, lr_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, lr_pred))
+
+# ---------------------------
+# Decision Tree Model
+# ---------------------------
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+dt_pred = dt_model.predict(X_test)
+
+print("\n🔷 Decision Tree Results:")
+print("Accuracy:", accuracy_score(y_test, dt_pred))
+print("Classification Report:\n", classification_report(y_test, dt_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, dt_pred))
+
+# ---------------------------
+# Random Forest Model
+# ---------------------------
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+rf_pred = rf_model.predict(X_test)
+
+print("\n🔷 Random Forest Results:")
+print("Accuracy:", accuracy_score(y_test, rf_pred))
+print("Classification Report:\n", classification_report(y_test, rf_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, rf_pred))
+models = ['Logistic Regression', 'Decision Tree', 'Random Forest']
+accuracies = [accuracy_score(y_test, lr_pred),
+              accuracy_score(y_test, dt_pred),
+              accuracy_score(y_test, rf_pred)]
+
+comparison_df = pd.DataFrame({'Model': models, 'Accuracy': accuracies})
+print(comparison_df)
+
+importances = rf_model.feature_importances_
+feature_names = X.columns
+sns.barplot(x=importances, y=feature_names, palette='pastel')
+plt.title('Feature Importances (Random Forest)')
+plt.show()
+
+
